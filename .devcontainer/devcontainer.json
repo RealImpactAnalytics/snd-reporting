@@ -1,0 +1,50 @@
+{
+    "name": "Delivery setup",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "args": {
+            "SND_VERSION": "develop"
+        }
+    },
+    "containerEnv": {
+        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+    },
+    "mounts": [
+        "source=vscode-delivery-extensions,target=/root/.vscode-server/extensions,type=volume",
+        "source=pre-commit-cache,target=/root/.cache/pre-commit,type=volume",
+        "source=${localWorkspaceFolder}/../mjolnir,target=/ria/mjolnir,type=bind,consistency=cached,readonly",
+        "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
+        "source=${localEnv:HOME}/.docker-unix,target=/root/.docker,type=bind",
+        "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind",
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/venv/bin/python",
+                "python.linting.enabled": true,
+                "python.formatting.provider": "black",
+                "python.formatting.blackPath": "/venv/bin/black",
+                "python.linting.flake8Path": "/venv/bin/flake8"
+            },
+
+            "extensions": [
+                "bungcip.better-toml",
+                "eamodio.gitlens",
+                "ms-python.black-formatter",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "VisualStudioExptTeam.vscodeintellicode",
+                "VisualStudioExptTeam.intellicode-api-usage-examples"
+            ]
+        }
+    },
+
+    "postCreateCommand": "pre-commit install"
+}

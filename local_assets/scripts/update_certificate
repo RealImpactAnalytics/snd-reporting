@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# DESCRIPTION:
+#   - Updates the TLS certificate on the server. Supposed to be run as root in crontab
+#
+# USAGE:
+#   sudo crontab -e
+#   0 23 1 * * /RIA/<delivery repository name>/local_assets/scripts/update_certificate
+# -----------------------------------------------------------------------------
+
+set -o errexit
+set -o nounset
+
+# There might be more than one certificate installed, we need to specify which one
+# ex:
+#DNS_NAME="sd-qa-1.riaktr.com"
+DNS_NAME="<HOST_NAME>"
+
+docker stop $(docker ps --filter "name=traefik-public" --format {{.ID}});
+certbot renew --cert-name ${DNS_NAME}
+
+CERT_SOURCE_LOCATION="/etc/letsencrypt/live/${DNS_NAME}"
+
+# ex:
+#DELIVERY_REPOSITORY_NAME="snd-deployment-demo"
+DELIVERY_REPOSITORY_NAME="<delivery repository name>"
+CERT_DESTINATION="/RIA/${DELIVERY_REPOSITORY_NAME}/secrets/certs"
+
+cp ${CERT_SOURCE_LOCATION}/* ${CERT_DESTINATION}
+# our traefik is configured right now to use cacert.pem
+ln -s ${CERT_DESTINATION}/fullchain.pem ${CERT_DESTINATION}/cacert.pem
+
+chown -R ci:ci ${CERT_DESTINATION}/*
+chmod u+rwX,go+rX,go-w ${CERT_DESTINATION}/*;
+
+docker restart $(docker ps -a --filter "name=traefik-public" --format {{.ID}})

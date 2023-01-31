@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# NAME:
+#   backup_network_capex
+#
+# SYNOPSIS:
+#   backup_network_capex
+#
+# OPTIONS:
+#   -f FILE         The path of the archive file.
+#   -d DIRECTORY    The directory path to the archive file.
+#   -h              Display this help.
+#
+# DESCRIPTION:
+#   Make a backup archive of all stateful parts of the product.
+# -----------------------------------------------------------------------------
+
+set -o errexit
+set -o nounset
+
+BACKUP_IMAGE=
+COMPOSE_NETWORK=
+BACKUP_OUTPUT_FILE=backup.tar.gz
+BACKUP_OUTPUT_DIRECTORY=.
+CONTAINER_NAME=sc-backup
+
+function print_usage
+{
+  printf 'USAGE:\n'
+  printf '\t./tools/scripts/backup_network_capex [OPTIONS]\n'
+  printf '\nOPTIONS:\n'
+  printf '\t-f FILE\t\tThe path of the archive file.\n'
+  printf '\t-d DIRECTORY\tThe directory path to the archive file.\n'
+  printf '\t-h\t\tDisplay this help.\n'
+}
+
+function parse_options
+{
+  while [[ $# > 0 ]]; do
+    case $1 in
+    -h)
+      print_usage
+      exit 0
+      ;;
+    -f)
+      BACKUP_OUTPUT_FILE=${2:-}
+      shift 2
+      ;;
+    -d)
+      BACKUP_OUTPUT_DIRECTORY=${2:-}
+      shift 2
+      ;;
+    *)
+      printf 'backup_network_capex: unknown option: %s\n' "$1"
+      exit 1
+      ;;
+    esac
+  done
+}
+
+function get_configuration
+{
+  DATA_BROKER_DEFAULT_NAME="network-capex-data-broker-db"
+  DATA_BROKER_HOST=`docker ps --filter=name=${DATA_BROKER_DEFAULT_NAME} --format="{{.Names}}"`
+  DATA_BROKER_CONTAINER_NAME=${DATA_BROKER_HOST:-${DATA_BROKER_DEFAULT_NAME}}
+
+  REPOSITORY=$(docker inspect \
+    --format '{{.Config.Image}}' \
+    ${DATA_BROKER_CONTAINER_NAME} \
+    | awk -F/ '{print $1}')
+  BACKUP_IMAGE=$(docker image ls \
+    --format '{{.Repository}}:{{.Tag}}' \
+    ${REPOSITORY}/backup \
+    | head -1)
+  COMPOSE_NETWORK=$(docker inspect \
+    --format '{{.HostConfig.NetworkMode}}' \
+    ${DATA_BROKER_CONTAINER_NAME})
+
+  printf 'backup_network_capex: detected Docker network: %s\n' "${COMPOSE_NETWORK}"
+  printf 'backup_network_capex: detected Docker backup image: %s\n' "${BACKUP_IMAGE}"
+}
+
+function rm_container
+{
+  printf 'backup_network_capex: removing any running backup container\n'
+  docker container rm --volumes \
+    $(docker container ls -a --filter "name=${CONTAINER_NAME}" -q) \
+    &>/dev/null ||
+  printf 'backup_network_capex: no backup container found\n'
+  printf 'backup_network_capex: removed backup container\n'
+}
+
+function run_backup
+{
+  printf 'backup_network_capex: starting backup\n'
+
+  SERVICE_DEFAULT_NAME="network-capex-service"
+  SERVICE_HOST=`docker ps --filter=name=${SERVICE_DEFAULT_NAME} --format="{{.Names}}"`
+  SERVICE_CONTAINER_NAME=${SERVICE_HOST:-${SERVICE_DEFAULT_NAME}}
+
+  TILE_SERVICE_DEFAULT_NAME="network-capex-tile-service"
+  TILE_SERVICE_HOST=`docker ps --filter=name=${TILE_SERVICE_DEFAULT_NAME} --format="{{.Names}}"`
+  TILE_SERVICE_CONTAINER_NAME=${TILE_SERVICE_HOST:-${TILE_SERVICE_DEFAULT_NAME}}
+
+  docker run \
+    --name "${CONTAINER_NAME}" \
+    --network "${COMPOSE_NETWORK}" \
+    --volumes-from ${SERVICE_CONTAINER_NAME} \
+    --volumes-from ${TILE_SERVICE_CONTAINER_NAME} \
+    "${BACKUP_IMAGE}" ||
+  {
+    rm_container
+    exit 1
+  }
+
+  printf 'backup_network_capex: writing backup file: %s\n' "${BACKUP_OUTPUT_DIRECTORY}/${BACKUP_OUTPUT_FILE}"
+  docker cp \
+    "${CONTAINER_NAME}":/ria/backup_output/archive/backup.tar.gz \
+    "${BACKUP_OUTPUT_DIRECTORY}/${BACKUP_OUTPUT_FILE}" ||
+  {
+    printf 'backup_network_capex: failed to write backup file\n'
+    rm_container
+    exit 1
+  }
+  printf 'backup_network_capex: wrote backup file\n'
+
+  rm_container
+  printf 'backup_network_capex: finished backup\n'
+}
+
+function main
+{
+  parse_options "$@"
+  get_configuration
+  run_backup
+}
+
+if ([[ "$0" == "${BASH_SOURCE}" ]] || [[ ! -n "${BASH_SOURCE}" ]]); then
+  main "$@"
+else
+  printf 'backup_network_capex: script must be run as a standalone executable\n'
+  exit 1
+fi

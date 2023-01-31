@@ -1,0 +1,137 @@
+########################################################################################################
+# Top level configuration
+########################################################################################################
+# Whether to deploy using docker-compose or docker swarm
+# accepted values are "compose" or "swarm"
+# when using Swarm, make sure that you are running the deployment on the manager node
+DeploymentMode = "compose"
+
+# Set the deployer in debug mode
+Debug = false
+
+# Unique identifier for the deployment (e.g. for Slack integration)
+DeploymentID = "GROUP-OPCO-ENV"
+
+# Whether or not to force pull images from DockerHub
+PullDockerImages = false
+
+# Whether or not to pull changes from GitHub
+PullGit = false
+
+# Pull interval for GitHub (in seconds)
+PullInterval = 180
+
+# Whether to deploy continuously (aka in deamon mode) or once
+Daemonize = false
+
+########################################################################################################
+# Feature flags for deployment steps
+########################################################################################################
+[DeploymentFeatureFlagsConfig]
+# Whether or not to seed configuration in Consul
+SeedConsul = false
+# Whether or not to provision Keycloak authentication system (realm, roles, groups)
+SeedKeycloak = false
+# Whether or not to provision user accounts and restrictions
+SeedUsers = false
+# Whether or not to skip `docker-compose up`
+SkipDeployment = false
+# Whether or not to skip the seeding of the data (e.g. SQL, Minio)
+SkipDataSeeds = true
+
+########################################################################################################
+# Consul configuration
+########################################################################################################
+[ConsulConfig]
+# Override the Consul token used to seed the KV store
+#ACLToken = ""
+
+
+########################################################################################################
+# Data seed configuration
+########################################################################################################
+[DataSeedConfig]
+# Override the list of containers that we wait before seeding
+#WaitForHealthCheckList = ["data-broker-service-db"]
+
+########################################################################################################
+# Whitelist of stacks to deploy
+########################################################################################################
+[ComponentsStacksConfig]
+# Whether or not to deploy top level stack files defined in root ./deployment folder of delivery repositories
+IncludeTopLevelStacks = true
+
+# Whether or not to deploy each stack folder with its own project
+DeployStacksAsDifferentComposeProjects = false
+
+# Defines explicitely the profiles to enable in docker-compose commands used to operate on stacks
+Profiles = []
+
+# Define the list of Compose files to deploy based on the folder structure
+# For instance:
+#   ./deployment/stack1/docker-compose.yml
+#   ./deployment/stack2/docker-compose.yml
+#   ./deployment/stack3/docker-compose.yml
+# Stacks = [stack2] will only deploy stack2
+# Stacks = [stack1, stack3] will only deploy stack1 and stack3
+Stacks = []
+
+########################################################################################################
+# Keycloak configuration
+########################################################################################################
+[KeycloakConfig]
+# Wheter or not to delete and fully recreate the realm
+ForceRecreateFullRealm = false
+
+########################################################################################################
+# Data restrictions configuration
+########################################################################################################
+[DataRestrictionsConfig]
+# 2 policies are available:
+# - "lenient": no entry in the whitelist means that the user can access everything (default)
+# - "strict": no entry in the whitelist means that the user cannot access anything
+DefaultPolicy = "lenient"
+
+########################################################################################################
+# Users provisioning configuration
+########################################################################################################
+[UsersProvisioningConfig]
+
+# Create/update/delete users specified in /users/.special file and provide them with with `cat`=spe attribute;
+# Note that all special users will be in sync with .special file after redeploy
+# and all manual changes on these users will be lost;
+# Users created manually in keycloak are not affected by this configuration;
+[UsersProvisioningConfig.ProvisionSpecialUsers]
+# Create/Update users including roles and groups.
+CreateKeycloakAccounts = false
+# Set/Reset user credentials strategy from .special file, file not being persisted nor tracked on git (normally)
+# no        => noop operation no set of credentials is run
+# temporary => set the one define in the user-credentials.csv in a temporary mode
+# permanent => set the one define in the user-credentials.csv but permanently
+# Default: no
+SetCredentialsStrategy = "no"
+# Default data restriction policy will be applied. The restrictions are set at geo place and distributor level.
+SetDataRestrictions = false
+
+# Create/update/delete users specified in /users/users.csv file and provide them with with `cat`=reg attribute;
+# Note that all regular users will be in sync with users.csv file after redeploy
+# and all manual changes on these users will be lost;
+# Users created manually in keycloak are not affected by this configuration;
+[UsersProvisioningConfig.ProvisionRegularUsers]
+CreateKeycloakAccounts = false
+# Set/Reset user credentials strategy from user-credentials.csv, file not being persisted nor tracked on git (normally)
+# no        => noop operation no set of credentials is run
+# temporary => set the one define in the user-credentials.csv in a temporary mode
+# permanent => set the one define in the user-credentials.csv but permanently
+# Default: no
+SetCredentialsStrategy = "no"
+# Default data restriction policy will be applied
+SetDataRestrictions = false
+
+########################################################################################################
+# Github configuration
+########################################################################################################
+[GitConfig]
+Branch = "dev-server"
+DeployKeyLocation = "/deploy/secrets/github_deploy_key/git-deploy-key"
+Repository = "__DELIVERY_REPOSITORY_NAME__"

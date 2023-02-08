@@ -34,3 +34,9 @@ provision-etl-dev-server:  build-etl ## Build and runs the provisioning for depl
 		-v /tmp/$(REPO_NAME)/flows:/ria/flows \
 		-v /tmp/$(REPO_NAME)/jobs:/ria/jobs \
 		-v /tmp/$(REPO_NAME)/metadata:/ria/metadata $(IMAGE_BRANCH_LATEST)
+
+publish-etl: build-etl ## Build and push etl-provisioning image
+	@echo "Publishing image $(IMAGE_WITH_COMMIT_TAG)"
+	@docker tag $(IMAGE_WITH_COMMIT_TAG) $(IMAGE_BRANCH_LATEST)
+	@docker push $(IMAGE_WITH_COMMIT_TAG)
+	@docker push $(IMAGE_BRANCH_LATEST)

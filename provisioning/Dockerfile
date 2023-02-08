@@ -13,6 +13,8 @@ ENV FLOWS_NAMESPACE="custom-flows"
 
 COPY --chown=ria:ria --from=etl-deps /ria/packager/job_deps /ria/jobs/reporting
 
+# Airflow dags
+COPY --chown=ria:ria etl_code/flows /ria/dags
 # Prefect flows
 COPY --chown=ria:ria etl_code/flows /ria/flows
 COPY --chown=ria:ria etl_code/metadata /ria/metadata

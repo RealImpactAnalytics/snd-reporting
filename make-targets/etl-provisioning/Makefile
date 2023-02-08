@@ -17,6 +17,7 @@ IMAGE_BRANCH_LATEST = $(IMAGE_REPO):$(GIT_BRANCH)
 
 # MINIO connection
 PROVISIONING_ENVS = -e MINIO_ACCESS_KEY_ID=admin -e MINIO_SECRET_ACCESS_KEY=snd@ria123
+REPO_NAME = snd-reporting
 
 
 build-etl: ## Build etl-provisioning image
@@ -24,10 +25,13 @@ build-etl: ## Build etl-provisioning image
 	DOCKER_BUILDKIT=1 docker build -f provisioning/Dockerfile --platform linux/amd64 -t $(IMAGE_WITH_COMMIT_TAG) --progress=plain .
 
 
-provision-etl-dev-server: build-etl ## Build and runs the provisioning for deploying on the dev server
+provision-etl-dev-server:  build-etl ## Build and runs the provisioning for deploying on the dev server
 	$(if $(ssh_cmd),,$(error 'No ssh_cmd specified!'))
 	rm -rf tmp
-	docker run --rm --entrypoint cp -v ${CURRENT_WORKDIR}/tmp:/ria/tmp $(IMAGE_WITH_COMMIT_TAG) -R /ria/{dags,jobs,metadata,flows} /ria/tmp
-	rsync -azv --delete --progress --stats tmp/ $(GROUP_CODE)-$(COUNTRY_CODE)-dev:/tmp/etl-provisioning
-	ssh $(ssh_cmd) docker run --net ria $(PROVISIONING_ENVS) -i --rm -v /tmp/etl-provisioning/flows:/ria/flows -v /tmp/etl-provisioning/dags:/ria/dags -v /tmp/etl-provisioning/jobs:/ria/jobs -v /tmp/etl-provisioning/metadata:/ria/metadata $(IMAGE_BRANCH_LATEST)
-
+	docker run --rm --entrypoint cp -v ${PWD}/tmp:/ria/tmp $(IMAGE_WITH_COMMIT_TAG) -R /ria/{dags,jobs,metadata,flows} /ria/tmp
+	rsync -azv --delete --progress --stats tmp/ $(ssh_cmd):/tmp/$(REPO_NAME)
+	ssh $(ssh_cmd) docker run --net ria $(PROVISIONING_ENVS) -i --rm \
+		-v /tmp/$(REPO_NAME)/flows:/ria/flows \
+		-v /tmp/$(REPO_NAME)/dags:/ria/dags \
+		-v /tmp/$(REPO_NAME)/jobs:/ria/jobs \
+		-v /tmp/$(REPO_NAME)/metadata:/ria/metadata $(IMAGE_BRANCH_LATEST)

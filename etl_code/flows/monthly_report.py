@@ -12,7 +12,7 @@ FLOW_NAME = "monthly_report"
 COLLECT_PERFORMANCE_TASK_NAME = "collect_metrics"
 collect_metrics = SparkConsulTask(
     name=COLLECT_PERFORMANCE_TASK_NAME,
-    transformation_import_path="jobs.monthly_report.collect_metrics.CLASSNAME",
+    transformation_import_path="jobs.monthly_report.collect_metrics.CollectMetrics",
     job_config_defaults=job_config,
     **get_prefect_flow_task_config(FLOW_NAME, COLLECT_PERFORMANCE_TASK_NAME),
 )
@@ -21,7 +21,7 @@ collect_metrics = SparkConsulTask(
 SERVE_TO_MONGO_TASK = "serve_to_mongo"
 serve_to_mongo = SparkConsulTask(
     name=SERVE_TO_MONGO_TASK,
-    transformation_import_path="jobs.monthly_report.serve_to_mongo.CLASSNAME",
+    transformation_import_path="jobs.monthly_report.serve_to_mongo.ServeToMongo",
     job_config_defaults=job_config,
     **get_prefect_flow_task_config(FLOW_NAME, SERVE_TO_MONGO_TASK),
 )

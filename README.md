@@ -9,4 +9,4 @@ proof the importance of S&D
 __TO_DO__  @argo
 
 ## What
-detailed infor1mation [here](https://realimpactanalytics.atlassian.net/wiki/spaces/SD/pages/3296264235/Orange+group+impact+report)
+detailed information [here](https://realimpactanalytics.atlassian.net/wiki/spaces/SD/pages/3296264235/Orange+group+impact+report)

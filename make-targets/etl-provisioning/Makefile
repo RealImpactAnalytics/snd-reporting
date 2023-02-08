@@ -28,7 +28,7 @@ build-etl: ## Build etl-provisioning image
 provision-etl-dev-server:  build-etl ## Build and runs the provisioning for deploying on the dev server
 	$(if $(ssh_cmd),,$(error 'No ssh_cmd specified!'))
 	rm -rf tmp
-	docker run --rm --entrypoint cp -v ${PWD}/tmp:/ria/tmp $(IMAGE_WITH_COMMIT_TAG) -R /ria/{dags,jobs,metadata,flows} /ria/tmp
+	docker run --rm --entrypoint cp -v ${PWD}/tmp:/ria/tmp $(IMAGE_WITH_COMMIT_TAG) -R /ria/{jobs,metadata,flows} /ria/tmp
 	rsync -azv --delete --progress --stats tmp/ $(ssh_cmd):/tmp/$(REPO_NAME)
 	ssh $(ssh_cmd) docker run --net ria $(PROVISIONING_ENVS) -i --rm \
 		-v /tmp/$(REPO_NAME)/flows:/ria/flows \

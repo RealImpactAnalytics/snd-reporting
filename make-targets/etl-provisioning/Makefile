@@ -32,6 +32,5 @@ provision-etl-dev-server:  build-etl ## Build and runs the provisioning for depl
 	rsync -azv --delete --progress --stats tmp/ $(ssh_cmd):/tmp/$(REPO_NAME)
 	ssh $(ssh_cmd) docker run --net ria $(PROVISIONING_ENVS) -i --rm \
 		-v /tmp/$(REPO_NAME)/flows:/ria/flows \
-		-v /tmp/$(REPO_NAME)/dags:/ria/dags \
 		-v /tmp/$(REPO_NAME)/jobs:/ria/jobs \
 		-v /tmp/$(REPO_NAME)/metadata:/ria/metadata $(IMAGE_BRANCH_LATEST)

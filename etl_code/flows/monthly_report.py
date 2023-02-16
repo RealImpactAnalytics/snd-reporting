@@ -34,7 +34,6 @@ def register_flow(flow_register_kwargs):
         collect_metrics_task = collect_metrics(observation_date_parameter)
         serve_to_mongo_task = serve_to_mongo(observation_date_parameter)
         serve_to_mongo_task.set_upstream(collect_metrics_task)
-        collect_metrics.set_upstream(serve_to_mongo)
 
     # Register your flow (unless you know what you are doing, always keep it like this)
     flow.register(**flow_register_kwargs)

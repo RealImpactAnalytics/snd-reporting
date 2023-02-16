@@ -14,7 +14,6 @@ from typing import NamedTuple
 
 # class OraExport(SparkTransformation[Input, Output]):
 class CollectMetrics(SparkTransformation[None, None]):
-
     # input_connectors = Input(
     #     airtime_pos_profile=pipeline_state_ds.AIRTIME_POS_PROFILE,
     #     mfs_pos_profile=pipeline_state_ds.MFS_POS_PROFILE,
@@ -23,8 +22,8 @@ class CollectMetrics(SparkTransformation[None, None]):
     # output_connectors = Output(usage_analytics=pipeline_state_ds.USAGE_ANALYTICS_ORANGE_REPORT)
 
     def run(self, *args):
-        inputs = self.input_df()
-        print('test')
+        # inputs = self.input_df()
+        print(self.config)
 
         # self.write_df(Output(usage_analytics=normalize_colnames(Output_df),))
 
